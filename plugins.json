@@ -4,15 +4,15 @@
     "plugin_scope": "osu",
     "command_map": {
         "osu": {
-            "hargs": "",
-            "hdesc": "testingifitworks",
+            "hargs": "<username>",
+            "hdesc": "lấy thông tin người chơi",
             "fscope": "osu",
             "compatibly": 0
         }
     },
     "author": "sinn",
-    "version": "0.1",
+    "version": "0.2",
     "node_depends": {
 		"sync-request": "*"},
-    "complied_for": "0.3.0"
+    "complied_for": "0.5.0"
 }
