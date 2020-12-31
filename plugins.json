@@ -1,0 +1,18 @@
+{
+    "plugin_name": "getuserinfo",
+    "plugin_exec": "owo.js",
+    "plugin_scope": "osu",
+    "command_map": {
+        "osu": {
+            "hargs": "",
+            "hdesc": "testingifitworks",
+            "fscope": "osu",
+            "compatibly": 0
+        }
+    },
+    "author": "sinn",
+    "version": "0.1",
+    "node_depends": {
+		"sync-request": "*"},
+    "complied_for": "0.3.0"
+}
