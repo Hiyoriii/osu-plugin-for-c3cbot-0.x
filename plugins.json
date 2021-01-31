@@ -26,11 +26,21 @@
             "hdesc": "lấy thông tin người chơi",
             "fscope": "osumania",
             "compatibly": 0
+        },
+        "osuavatar":{
+            "hargs": "<username>",
+            "hdesc": "lấy avatar người chơi",
+            "fscope": "osuavatar",
+            "compatibly": 0
         }
     },
     "author": "sinn",
     "version": "0.5",
     "node_depends": {
-		"sync-request": "*"},
+        "sync-request": "*",
+        "node-fetch": "*",
+        "path": "*",
+        "stream-buffers": "*"
+    },
     "complied_for": "0.5.0"
 }
