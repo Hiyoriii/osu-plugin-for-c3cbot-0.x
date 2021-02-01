@@ -59,7 +59,7 @@ var osuctb = function(type,data) {
                     reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
                     break;
                 default:
-                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=0`
+                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=2`
                     var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
                     var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
                         switch(stringdata){
@@ -103,7 +103,7 @@ var osutaiko = function(type,data) {
                     reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
                     break;
                 default:
-                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=0`
+                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=1`
                     var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
                     var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
                         switch(stringdata){
@@ -147,7 +147,7 @@ var osumania = function(type,data) {
                     reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
                     break;
                 default:
-                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=0`
+                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=3`
                     var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
                     var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
                         switch(stringdata){
@@ -228,6 +228,4 @@ var osuavatar = async function(type,data) {
 module.exports = {
     osu,osutaiko,osuctb,osumania,osuavatar
 }
-//made by sinn
-//don't mind these spaghetti code
-//heppy2021
+//fuckucovid19
