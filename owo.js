@@ -24,7 +24,7 @@ var osu = function(type,data) {
                                 break;
                             default:
                                 var objdata = JSON.parse(stringdata);                             //đổi string ->> object
-                                var user_id = objdata[0]["user_id"];                              //tách obj
+                                var user_id = objdata[0]["user_id"];                              //tách cl
                                 var username = objdata[0]["username"];                            //
                                 var pp_rank = objdata[0]["pp_rank"];                              //
                                 var country_rank = objdata[0]["pp_country_rank"]                  //
@@ -34,7 +34,7 @@ var osu = function(type,data) {
                                 var playcount = objdata[0]["playcount"]                           //
                                 var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
                                 var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Number(objdata[0]["level"]).toFixed(0)                //
+                                var level = Math.floor(Number(objdata[0]["level"]))               //
                                 var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
                                 break;
                                     }
@@ -78,7 +78,7 @@ var osuctb = function(type,data) {
                                 var playcount = objdata[0]["playcount"]                           //
                                 var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
                                 var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Number(objdata[0]["level"]).toFixed(0)                //
+                                var level = Math.floor(Number(objdata[0]["level"]))                //
                                 var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
                                 break;
                                     }
@@ -122,7 +122,7 @@ var osutaiko = function(type,data) {
                                 var playcount = objdata[0]["playcount"]                           //
                                 var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
                                 var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Number(objdata[0]["level"]).toFixed(0)                //
+                                var level = Math.floor(Number(objdata[0]["level"]))                //
                                 var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
                                 break;
                                     }
@@ -166,7 +166,7 @@ var osumania = function(type,data) {
                                 var playcount = objdata[0]["playcount"]                           //
                                 var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
                                 var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Number(objdata[0]["level"]).toFixed(0)                //
+                                var level = Math.floor(Number(objdata[0]["level"]))                //
                                 var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
                                 break;
                                     }
