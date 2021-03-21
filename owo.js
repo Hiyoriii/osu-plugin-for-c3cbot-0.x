@@ -1,231 +1,1205 @@
-var fetch = global.nodemodule["node-fetch"];
+var fs = global.nodemodule["fs"]
+var text2png =global.nodemodule["text2png"]
+var path = global.nodemodule['path']
+var merge = global.nodemodule['merge-images']
+var fetch = global.nodemodule["node-fetch"]
 var request = global.nodemodule["sync-request"]
-var streamBuffers = global.nodemodule["stream-buffers"]
-var apikey = ""                                 //thay api key từ https://osu.ppy.sh/p/api //edit this apikey from https://osu.ppy.sh/p/api (osu account required)
-var osu = function(type,data) {
+var { Canvas, Image } = global.nodemodule["canvas"]
+var resize = global.nodemodule["resize-img"]
+var jimp = global.nodemodule['jimp']
+var apikey = "7b3886e3efe99c2a3b8db51c3a1e8f9325d8226f"//dont spam pls, ratelimit 1200req/min, use your own apikey to prevent ratelimiting
+function ensureExists(path, mask) {
+    if (typeof mask != 'number') {
+      mask = 0o777;
+    }
+    try {
+      fs.mkdirSync(path, {
+        mode: mask,
+        recursive: true
+      });
+      return undefined;
+    } catch (ex) {
+      return { err: ex };
+    }
+  }
+var rootpath = path.resolve(__dirname, "..", "osu-data");
+ensureExists(rootpath);
+ensureExists(path.join(rootpath, "template"))
+ensureExists(path.join(rootpath, "font"))
+ensureExists(path.join(rootpath, "temp"))
+ensureExists(path.join(rootpath, "temp", "avatar"))
+ensureExists(path.join(rootpath, "temp", "username"))
+ensureExists(path.join(rootpath, "temp", "countryflag"))
+ensureExists(path.join(rootpath, "temp", "level"))
+ensureExists(path.join(rootpath, "temp", "country"))
+ensureExists(path.join(rootpath, "temp", "globalrank"))
+ensureExists(path.join(rootpath, "temp", "countryrank"))
+ensureExists(path.join(rootpath, "temp", "A"))
+ensureExists(path.join(rootpath, "temp", "S"))
+ensureExists(path.join(rootpath, "temp", "SH"))
+ensureExists(path.join(rootpath, "temp", "SS"))
+ensureExists(path.join(rootpath, "temp", "SSH"))
+ensureExists(path.join(rootpath, "temp", "playtime"))
+ensureExists(path.join(rootpath, "temp", "pp"))
+ensureExists(path.join(rootpath, "temp", "accuracy"))
+ensureExists(path.join(rootpath, "temp", "score"))
+ensureExists(path.join(rootpath, "temp", "card"))
+var nameMapping = {
+    "background": path.join(rootpath, "template","backgroundcard.png"),
+    "avatarcornerround": path.join(rootpath,"template","avatarcornerround.png"),
+    "font": path.join(rootpath, "font", "font.ttf"),
+    "osu": path.join(rootpath,"template","osu.png"),
+    "taiko":path.join(rootpath,"template","taiko.png"),
+    "catch": path.join(rootpath,"template","catch.png"),
+    "mania":path.join(rootpath,"template","mania.png")
+}
+for (var n in nameMapping) {
+    if (!fs.existsSync(nameMapping[n])) {
+		fs.writeFileSync(nameMapping[n], global.fileMap[n]); // lỗi dòng này // hết lỗi rồi
+	}
+}
+var fontpath = path.join(rootpath, "font", "font.ttf")
+var osu = async function(type,data) {
     var username = encodeURIComponent(data.args.slice(1).join(" "))
-    var reply
+    var reply //??
     switch(username){
         case "":
             reply = global.config.commandPrefix+"osu <username>"
-            break;
+            return{
+                handler: "internal",
+                data: reply
+            }
         default:
             switch(apikey){
                 case "":
                     reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
+                    return{
+                        handler: "internal",
+                        data: reply
+                    }
                     break;
                 default:
                     var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=0`
-                    var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
-                    var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
+                    var bufferdata = request("GET",api);                                        
+                    var stringdata = bufferdata.body.toString();                                
                         switch(stringdata){
                             case "[]":
-                                reply = "không phải username!"
-                                break;
+                                reply = "không tìm thấy người chơi tên" + ` "${username}"`
+                                return{
+                                    handler: "internal",
+                                    data: reply
+                                }
                             default:
-                                var objdata = JSON.parse(stringdata);                             //đổi string ->> object
-                                var user_id = objdata[0]["user_id"];                              //tách cl
-                                var username = objdata[0]["username"];                            //
-                                var pp_rank = objdata[0]["pp_rank"];                              //
-                                var country_rank = objdata[0]["pp_country_rank"]                  //
-                                var country = objdata[0]["country"]                               //
-                                var ranked_score = objdata[0]["ranked_score"]                     //
-                                var total_score = objdata[0]["total_score"]                       //
-                                var playcount = objdata[0]["playcount"]                           //
-                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
-                                var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Math.floor(Number(objdata[0]["level"]))               //
-                                var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
+                                var objdata = JSON.parse(stringdata);                             
+                                var user_id = objdata[0]["user_id"];                              
+                                var username = objdata[0]["username"];                            
+                                var globalrank = objdata[0]["pp_rank"];                              
+                                var countryrank = objdata[0]["pp_country_rank"]                  
+                                var country = objdata[0]["country"]                               
+                                var score = objdata[0]["total_score"]                             
+                                var playcount = objdata[0]["playcount"]                           
+                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2) + `%`
+                                var pp = Number(objdata[0]["pp_raw"]).toFixed(0)                  
+                                var level = Number(objdata[0]["level"]).toFixed(0)
+                                var playtime = (Number(objdata[0]["total_seconds_played"]) / 3600).toFixed(1) + `h`
+                                var A = objdata[0]["count_rank_a"]
+                                var S = objdata[0]["count_rank_s"]
+                                var SH = objdata[0]["count_rank_sh"]
+                                var SS = objdata[0]["count_rank_ss"]
+                                var SSH = objdata[0]["count_rank_ssh"]                              // nawnnawn
+                                var countryflag = await fetch(`https://osu.ppy.sh/images/flags/${country}.png`).then(res => res.buffer())
+                                var bufferavatar = await fetch(`https://a.ppy.sh/${user_id}`).then(res => res.buffer())
+                                var userpng = `osu_`+username+`.png`
+                                var userjpg = `osu_`+username+`.jpg`
+                                if (score > 999999999){
+                                    var score = (score/1000000000).toFixed(1) + `B`
+                                    }
+                                    else if (score > 999999){
+                                        var score = (score/1000000).toFixed(1) + `M`
+                                    }
+                                    else if (score > 99999){
+                                        var score = (score/1000).toFixed(1) + `K`
+                                    }
+                                    else{
+                                        var score = score //wtf why did i write this line //work so no touching
+                                    }
+                                fs.writeFileSync(path.join(rootpath, "temp","countryflag",country+`flag.png`), countryflag)
+                                fs.writeFileSync(path.join(rootpath, "temp","avatar",userjpg), bufferavatar)
+                                try{
+                                var resizedavatarbuffer = await resize(fs.readFileSync(path.join(rootpath,"temp","avatar",userjpg)), {
+                                    width: 277,
+                                    height: 277
+                                })
+                                fs.writeFileSync(path.join(rootpath,"temp","avatar",userjpg), resizedavatarbuffer)
+                                } catch(giferr){
+                                    await jimp.read(path.join(rootpath, "temp","avatar",userjpg)).then(giferr => {
+                                        return giferr.resize(277,277).write(path.join(rootpath, "temp","avatar",userjpg))
+                                    }).catch(err=>{console.log(err)})
+                                }
+                                var resizedflag = await resize(fs.readFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`)), {
+                                    width: 60,
+                                    height: 40
+                                })
+                                
+                                fs.writeFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`), resizedflag)
+                                fs.writeFileSync(path.join(rootpath, "temp", "username",userpng), text2png(username,{
+                                    color: "#ffffff",
+                                    font: "63px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "country",country+`.png`), text2png(country,{
+                                    color: "#ffffff",
+                                    font: "36px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "globalrank",userpng), text2png(`#`+globalrank,{
+                                    color: "#ffffff",
+                                    font: "76px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "countryrank",userpng), text2png(`#`+countryrank,{
+                                    color: "#ffffff",
+                                    font: "57px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "level",userpng), text2png(level,{
+                                    color: "#ffffff",
+                                    font: "30px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "A",userpng), text2png(A,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "S",userpng), text2png(S,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SH",userpng), text2png(SH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SS",userpng), text2png(SS,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SSH",userpng), text2png(SSH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "pp",userpng), text2png(pp,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "accuracy",userpng), text2png(accuracy,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "playtime",userpng), text2png(playtime,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "score",userpng), text2png(score,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                var dcmcouldntloadimg = await merge(
+                                    [
+                                        {
+                                            src: path.join(rootpath,"template","backgroundcard.png")
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","avatar",userjpg),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","avatarcornerround.png"),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","username",userpng),
+                                            x:347,
+                                            y:72
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryflag",country+`flag.png`),
+                                            x:350,
+                                            y:130
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","country",country+`.png`),
+                                            x:425,
+                                            y:140
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","globalrank",userpng),
+                                            x:347,
+                                            y:190
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryrank",userpng),
+                                            x:347,
+                                            y:276
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","level",userpng),
+                                            x: Math.ceil(376 - (level.length * 18 + (level.length - 1) * 1) / 2) + 1,
+                                            y: 360
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","A",userpng),
+                                            x: Math.ceil(810 - (A.length * 16 + (A.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","S",userpng),
+                                            x: Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SH",userpng),
+                                            x: Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SS",userpng),
+                                            x: Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SSH",userpng),
+                                            x: Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","pp",userpng),
+                                            x: Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","accuracy",userpng),
+                                            x: Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","playtime",userpng),
+                                            x: Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","score",userpng),
+                                            x: Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","osu.png"),
+                                            x:252,
+                                            y:261
+                                        }
+                                    ],
+                                    {
+                                        Canvas: Canvas,
+                                        Image: Image
+                                    }).then(function (res) {
+                                        fs.writeFile(
+                                            path.join(rootpath, "temp", "card",userjpg),res.replace(/^data:image\/png;base64,/, ""),"base64",function (err) { if (err) data.log(err);
+                                                var img = fs.createReadStream(path.join(rootpath, "temp", "card",userjpg));
+                                                data.return({
+                                                    handler: "internal",
+                                                    data: {
+                                                        body: "",
+                                                        attachment: ([img]) //made it lol
+                                                    }
+                                                });
+                                            });
+                                    })
                                 break;
                                     }
                     break;
             }
     }
-    return{
-        handler:"internal",
-        data: reply
-    }
 }
-var osuctb = function(type,data) {
-    var username = encodeURIComponent(data.args.slice(1).join(" "))
-    var reply
-    switch(username){
-        case "":
-            reply = global.config.commandPrefix+"osuctb <username>"
-            break;
-        default:
-            switch(apikey){
-                case "":
-                    reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
-                    break;
-                default:
-                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=2`
-                    var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
-                    var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
-                        switch(stringdata){
-                            case "[]":
-                                reply = "không phải username!"
-                                break;
-                            default:
-                                var objdata = JSON.parse(stringdata);                             //đổi string ->> object
-                                var user_id = objdata[0]["user_id"];                              // giảm nhiều dòng vcl
-                                var username = objdata[0]["username"];                            //
-                                var pp_rank = objdata[0]["pp_rank"];                              //
-                                var country_rank = objdata[0]["pp_country_rank"]                  //
-                                var country = objdata[0]["country"]                               //
-                                var ranked_score = objdata[0]["ranked_score"]                     //
-                                var total_score = objdata[0]["total_score"]                       //
-                                var playcount = objdata[0]["playcount"]                           //
-                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
-                                var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Math.floor(Number(objdata[0]["level"]))                //
-                                var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
-                                break;
-                                    }
-                    break;
-            }
-    }
-    return{
-        handler:"internal",
-        data: reply
-    }
-}
-var osutaiko = function(type,data) {
+var osutaiko = async function(type,data) {
     var username = encodeURIComponent(data.args.slice(1).join(" "))
     var reply
     switch(username){
         case "":
             reply = global.config.commandPrefix+"osutaiko <username>"
-            break;
+            return{
+                handler: "internal",
+                data: reply
+            }
         default:
             switch(apikey){
                 case "":
                     reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
+                    return{
+                        handler: "internal",
+                        data: reply
+                    }
                     break;
                 default:
                     var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=1`
-                    var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
-                    var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
+                    var bufferdata = request("GET",api);                                        
+                    var stringdata = bufferdata.body.toString();                                
                         switch(stringdata){
                             case "[]":
-                                reply = "không phải username!"
-                                break;
+                                reply = "không tìm thấy người chơi tên" + ` "${username}"`
+                                return{
+                                    handler: "internal",
+                                    data: reply
+                                }
                             default:
-                                var objdata = JSON.parse(stringdata);                             //đổi string ->> object
-                                var user_id = objdata[0]["user_id"];                              //
-                                var username = objdata[0]["username"];                            //
-                                var pp_rank = objdata[0]["pp_rank"];                              //
-                                var country_rank = objdata[0]["pp_country_rank"]                  //
-                                var country = objdata[0]["country"]                               //
-                                var ranked_score = objdata[0]["ranked_score"]                     //
-                                var total_score = objdata[0]["total_score"]                       //
-                                var playcount = objdata[0]["playcount"]                           //
-                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
-                                var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Math.floor(Number(objdata[0]["level"]))                //
-                                var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
+                                var objdata = JSON.parse(stringdata);                             
+                                var user_id = objdata[0]["user_id"];                              
+                                var username = objdata[0]["username"];                            
+                                var globalrank = objdata[0]["pp_rank"];                              
+                                var countryrank = objdata[0]["pp_country_rank"]                  
+                                var country = objdata[0]["country"]                               
+                                var score = objdata[0]["total_score"]                             
+                                var playcount = objdata[0]["playcount"]                           
+                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2) + `%`
+                                var pp = Number(objdata[0]["pp_raw"]).toFixed(0)                  
+                                var level = Number(objdata[0]["level"]).toFixed(0)
+                                var playtime = (Number(objdata[0]["total_seconds_played"]) / 3600).toFixed(1) + `h`
+                                var A = objdata[0]["count_rank_a"]
+                                var S = objdata[0]["count_rank_s"]
+                                var SH = objdata[0]["count_rank_sh"]
+                                var SS = objdata[0]["count_rank_ss"]
+                                var SSH = objdata[0]["count_rank_ssh"]
+                                var countryflag = await fetch(`https://osu.ppy.sh/images/flags/${country}.png`).then(res => res.buffer())
+                                var bufferavatar = await fetch(`https://a.ppy.sh/${user_id}`).then(res => res.buffer())
+                                var userpng = `taiko_`+username+`.png`
+                                var userjpg = `taiko_`+username+`.jpg`
+                                if (score > 999999999){
+                                    var score = (score/1000000000).toFixed(1) + `B`
+                                    }
+                                    else if (score > 999999){
+                                        var score = (score/1000000).toFixed(1) + `M`
+                                    }
+                                    else if (score > 99999){
+                                        var score = (score/1000).toFixed(1) + `K`
+                                    }
+                                    else{
+                                        var score = score
+                                    }
+                                fs.writeFileSync(path.join(rootpath, "temp","countryflag",country+`flag.png`), countryflag)
+                                fs.writeFileSync(path.join(rootpath, "temp","avatar",userjpg), bufferavatar)
+                                try{
+                                var resizedavatarbuffer = await resize(fs.readFileSync(path.join(rootpath,"temp","avatar",userjpg)), {
+                                    width: 277,
+                                    height: 277
+                                })
+                                fs.writeFileSync(path.join(rootpath,"temp","avatar",userjpg), resizedavatarbuffer)
+                                } catch(giferr){
+                                    await jimp.read(path.join(rootpath, "temp","avatar",userjpg)).then(giferr => {
+                                        return giferr.resize(277,277).write(path.join(rootpath, "temp","avatar",userjpg))
+                                    }).catch(err=>{console.log(err)})
+                                }
+                                var resizedflag = await resize(fs.readFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`)), {
+                                    width: 60,
+                                    height: 40
+                                })
+                                
+                                fs.writeFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`), resizedflag)
+                                fs.writeFileSync(path.join(rootpath, "temp", "username",userpng), text2png(username,{
+                                    color: "#ffffff",
+                                    font: "63px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "country",country+`.png`), text2png(country,{
+                                    color: "#ffffff",
+                                    font: "36px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "globalrank",userpng), text2png(`#`+globalrank,{
+                                    color: "#ffffff",
+                                    font: "76px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "countryrank",userpng), text2png(`#`+countryrank,{
+                                    color: "#ffffff",
+                                    font: "57px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "level",userpng), text2png(level,{
+                                    color: "#ffffff",
+                                    font: "30px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "A",userpng), text2png(A,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "S",userpng), text2png(S,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SH",userpng), text2png(SH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SS",userpng), text2png(SS,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SSH",userpng), text2png(SSH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "pp",userpng), text2png(pp,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "accuracy",userpng), text2png(accuracy,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "playtime",userpng), text2png(playtime,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "score",userpng), text2png(score,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                var dcmcouldntloadimg = await merge(
+                                    [
+                                        {
+                                            src: path.join(rootpath,"template","backgroundcard.png")
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","avatar",userjpg),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","avatarcornerround.png"),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","username",userpng),
+                                            x:347,
+                                            y:72
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryflag",country+`flag.png`),
+                                            x:350,
+                                            y:130
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","country",country+`.png`),
+                                            x:425,
+                                            y:140
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","globalrank",userpng),
+                                            x:347,
+                                            y:190
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryrank",userpng),
+                                            x:347,
+                                            y:276
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","level",userpng),
+                                            x: Math.ceil(376 - (level.length * 18 + (level.length - 1) * 1) / 2) + 1,
+                                            y: 360
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","A",userpng),
+                                            x: Math.ceil(810 - (A.length * 16 + (A.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","S",userpng),
+                                            x: Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SH",userpng),
+                                            x: Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SS",userpng),
+                                            x: Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SSH",userpng),
+                                            x: Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","pp",userpng),
+                                            x: Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","accuracy",userpng),
+                                            x: Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","playtime",userpng),
+                                            x: Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","score",userpng),
+                                            x: Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","taiko.png"),
+                                            x:252,
+                                            y:261
+                                        }
+                                    ],
+                                    {
+                                        Canvas: Canvas,
+                                        Image: Image
+                                    }).then(function (res) {
+                                        fs.writeFile(
+                                            path.join(rootpath, "temp", "card",userjpg),res.replace(/^data:image\/png;base64,/, ""),"base64",function (err) { if (err) data.log(err);
+                                                var img = fs.createReadStream(path.join(rootpath, "temp", "card",userjpg));
+                                                data.return({
+                                                    handler: "internal",
+                                                    data: {
+                                                        body: "",
+                                                        attachment: ([img])
+                                                    }
+                                                });
+                                            });
+                                    })
                                 break;
                                     }
                     break;
             }
     }
-    return{
-        handler:"internal",
-        data: reply
+}
+var osucatch = async function(type,data) {
+    var username = encodeURIComponent(data.args.slice(1).join(" "))
+    var reply
+    switch(username){
+        case "":
+            reply = global.config.commandPrefix+"osucatch <username>"
+            return{
+                handler: "internal",
+                data: reply
+            }
+        default:
+            switch(apikey){
+                case "":
+                    reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
+                    return{
+                        handler: "internal",
+                        data: reply
+                    }
+                    break;
+                default:
+                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=2`
+                    var bufferdata = request("GET",api);                                        
+                    var stringdata = bufferdata.body.toString();                                
+                        switch(stringdata){
+                            case "[]":
+                                reply = "không tìm thấy người chơi tên" + ` "${username}"`
+                                return{
+                                    handler: "internal",
+                                    data: reply
+                                }
+                            default:
+                                var objdata = JSON.parse(stringdata);                             
+                                var user_id = objdata[0]["user_id"];                              
+                                var username = objdata[0]["username"];                            
+                                var globalrank = objdata[0]["pp_rank"];                              
+                                var countryrank = objdata[0]["pp_country_rank"]                  
+                                var country = objdata[0]["country"]                               
+                                var score = objdata[0]["total_score"]                             
+                                var playcount = objdata[0]["playcount"]                           
+                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2) + `%`
+                                var pp = Number(objdata[0]["pp_raw"]).toFixed(0)                  
+                                var level = Number(objdata[0]["level"]).toFixed(0)
+                                var playtime = (Number(objdata[0]["total_seconds_played"]) / 3600).toFixed(1) + `h`
+                                var A = objdata[0]["count_rank_a"]
+                                var S = objdata[0]["count_rank_s"]
+                                var SH = objdata[0]["count_rank_sh"]
+                                var SS = objdata[0]["count_rank_ss"]
+                                var SSH = objdata[0]["count_rank_ssh"]
+                                var countryflag = await fetch(`https://osu.ppy.sh/images/flags/${country}.png`).then(res => res.buffer())
+                                var bufferavatar = await fetch(`https://a.ppy.sh/${user_id}`).then(res => res.buffer())
+                                var userpng = `catch_`+username+`.png`
+                                var userjpg = `catch_`+username+`.jpg`
+                                if (score > 999999999){
+                                    var score = (score/1000000000).toFixed(1) + `B`
+                                    }
+                                    else if (score > 999999){
+                                        var score = (score/1000000).toFixed(1) + `M`
+                                    }
+                                    else if (score > 99999){
+                                        var score = (score/1000).toFixed(1) + `K`
+                                    }
+                                    else{
+                                        var score = score
+                                    }
+                                fs.writeFileSync(path.join(rootpath, "temp","countryflag",country+`flag.png`), countryflag)
+                                fs.writeFileSync(path.join(rootpath, "temp","avatar",userjpg), bufferavatar)
+                                try{
+                                var resizedavatarbuffer = await resize(fs.readFileSync(path.join(rootpath,"temp","avatar",userjpg)), {
+                                    width: 277,
+                                    height: 277
+                                })
+                                fs.writeFileSync(path.join(rootpath,"temp","avatar",userjpg), resizedavatarbuffer)
+                                } catch(giferr){
+                                    await jimp.read(path.join(rootpath, "temp","avatar",userjpg)).then(giferr => {
+                                        return giferr.resize(277,277).write(path.join(rootpath, "temp","avatar",userjpg))
+                                    }).catch(err=>{console.log(err)})
+                                }
+                                var resizedflag = await resize(fs.readFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`)), {
+                                    width: 60,
+                                    height: 40
+                                })
+                                
+                                fs.writeFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`), resizedflag)
+                                fs.writeFileSync(path.join(rootpath, "temp", "username",userpng), text2png(username,{
+                                    color: "#ffffff",
+                                    font: "63px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "country",country+`.png`), text2png(country,{
+                                    color: "#ffffff",
+                                    font: "36px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "globalrank",userpng), text2png(`#`+globalrank,{
+                                    color: "#ffffff",
+                                    font: "76px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "countryrank",userpng), text2png(`#`+countryrank,{
+                                    color: "#ffffff",
+                                    font: "57px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "level",userpng), text2png(level,{
+                                    color: "#ffffff",
+                                    font: "30px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "A",userpng), text2png(A,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "S",userpng), text2png(S,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SH",userpng), text2png(SH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SS",userpng), text2png(SS,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SSH",userpng), text2png(SSH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "pp",userpng), text2png(pp,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "accuracy",userpng), text2png(accuracy,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "playtime",userpng), text2png(playtime,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "score",userpng), text2png(score,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                var dcmcouldntloadimg = await merge(
+                                    [
+                                        {
+                                            src: path.join(rootpath,"template","backgroundcard.png")
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","avatar",userjpg),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","avatarcornerround.png"),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","username",userpng),
+                                            x:347,
+                                            y:72
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryflag",country+`flag.png`),
+                                            x:350,
+                                            y:130
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","country",country+`.png`),
+                                            x:425,
+                                            y:140
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","globalrank",userpng),
+                                            x:347,
+                                            y:190
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryrank",userpng),
+                                            x:347,
+                                            y:276
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","level",userpng),
+                                            x: Math.ceil(376 - (level.length * 18 + (level.length - 1) * 1) / 2) + 1,
+                                            y: 360
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","A",userpng),
+                                            x: Math.ceil(810 - (A.length * 16 + (A.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","S",userpng),
+                                            x: Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SH",userpng),
+                                            x: Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SS",userpng),
+                                            x: Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SSH",userpng),
+                                            x: Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","pp",userpng),
+                                            x: Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","accuracy",userpng),
+                                            x: Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","playtime",userpng),
+                                            x: Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","score",userpng),
+                                            x: Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","catch.png"),
+                                            x:252,
+                                            y:261
+                                        }
+                                    ],
+                                    {
+                                        Canvas: Canvas,
+                                        Image: Image
+                                    }).then(function (res) {
+                                        fs.writeFile(
+                                            path.join(rootpath, "temp", "card",userjpg),res.replace(/^data:image\/png;base64,/, ""),"base64",function (err) { if (err) data.log(err);
+                                                var img = fs.createReadStream(path.join(rootpath, "temp", "card",userjpg));
+                                                data.return({
+                                                    handler: "internal",
+                                                    data: {
+                                                        body: "",
+                                                        attachment: ([img])
+                                                    }
+                                                });
+                                            });
+                                    })
+                                break;
+                                    }
+                    break;
+            }
     }
 }
-var osumania = function(type,data) {
+var osumania = async function(type,data) {
     var username = encodeURIComponent(data.args.slice(1).join(" "))
     var reply
     switch(username){
         case "":
             reply = global.config.commandPrefix+"osumania <username>"
-            break;
+            return{
+                handler: "internal",
+                data: reply
+            }
         default:
             switch(apikey){
                 case "":
                     reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
+                    return{
+                        handler: "internal",
+                        data: reply
+                    }
                     break;
                 default:
                     var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=3`
-                    var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
-                    var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
+                    var bufferdata = request("GET",api);                                        
+                    var stringdata = bufferdata.body.toString();                                
                         switch(stringdata){
                             case "[]":
-                                reply = "không phải username!"
-                                break;
+                                reply = "không tìm thấy người chơi tên" + ` "${username}"`
+                                return{
+                                    handler: "internal",
+                                    data: reply
+                                }
                             default:
-                                var objdata = JSON.parse(stringdata);                             //đổi string ->> object
-                                var user_id = objdata[0]["user_id"];                              //
-                                var username = objdata[0]["username"];                            //
-                                var pp_rank = objdata[0]["pp_rank"];                              //
-                                var country_rank = objdata[0]["pp_country_rank"]                  //
-                                var country = objdata[0]["country"]                               //
-                                var ranked_score = objdata[0]["ranked_score"]                     //
-                                var total_score = objdata[0]["total_score"]                       //
-                                var playcount = objdata[0]["playcount"]                           //
-                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2)          //
-                                var pp = Number(objdata[0]["pp_raw"]).toFixed(2)                  //
-                                var level = Math.floor(Number(objdata[0]["level"]))                //
-                                var reply = `Thông tin của ${username} (id: ${user_id})\r\nRank: #${pp_rank} (#${country_rank} ${country})\r\nPerformance Points: ${pp}\r\nLevel: ${level}\r\nAccuracy: ${accuracy}%\r\nRanked Score: ${ranked_score}\r\nTotal Score: ${total_score}\r\nPlaycount: ${playcount}`
+                                var objdata = JSON.parse(stringdata);                             
+                                var user_id = objdata[0]["user_id"];                              
+                                var username = objdata[0]["username"];                            
+                                var globalrank = objdata[0]["pp_rank"];                              
+                                var countryrank = objdata[0]["pp_country_rank"]                  
+                                var country = objdata[0]["country"]                               
+                                var score = objdata[0]["total_score"]                             
+                                var playcount = objdata[0]["playcount"]                           
+                                var accuracy = Number(objdata[0]["accuracy"]).toFixed(2) + `%`
+                                var pp = Number(objdata[0]["pp_raw"]).toFixed(0)                  
+                                var level = Number(objdata[0]["level"]).toFixed(0)
+                                var playtime = (Number(objdata[0]["total_seconds_played"]) / 3600).toFixed(1) + `h`
+                                var A = objdata[0]["count_rank_a"]
+                                var S = objdata[0]["count_rank_s"]
+                                var SH = objdata[0]["count_rank_sh"]
+                                var SS = objdata[0]["count_rank_ss"]
+                                var SSH = objdata[0]["count_rank_ssh"]
+                                var countryflag = await fetch(`https://osu.ppy.sh/images/flags/${country}.png`).then(res => res.buffer())
+                                var bufferavatar = await fetch(`https://a.ppy.sh/${user_id}`).then(res => res.buffer())
+                                var userpng = `mania_`+username+`.png`
+                                var userjpg = `mania_`+username+`.jpg`
+                                if (score > 999999999){
+                                    var score = (score/1000000000).toFixed(1) + `B`
+                                    }
+                                    else if (score > 999999){
+                                        var score = (score/1000000).toFixed(1) + `M`
+                                    }
+                                    else if (score > 99999){
+                                        var score = (score/1000).toFixed(1) + `K`
+                                    }
+                                    else{
+                                        var score = score
+                                    }
+                                fs.writeFileSync(path.join(rootpath, "temp","countryflag",country+`flag.png`), countryflag)
+                                fs.writeFileSync(path.join(rootpath, "temp","avatar",userjpg), bufferavatar)
+                                try{
+                                var resizedavatarbuffer = await resize(fs.readFileSync(path.join(rootpath,"temp","avatar",userjpg)), {
+                                    width: 277,
+                                    height: 277
+                                })
+                                fs.writeFileSync(path.join(rootpath,"temp","avatar",userjpg), resizedavatarbuffer)
+                                } catch(giferr){
+                                    await jimp.read(path.join(rootpath, "temp","avatar",userjpg)).then(giferr => {
+                                        return giferr.resize(277,277).write(path.join(rootpath, "temp","avatar",userjpg))
+                                    }).catch(err=>{console.log(err)})
+                                }
+                                var resizedflag = await resize(fs.readFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`)), {
+                                    width: 60,
+                                    height: 40
+                                })
+                                
+                                fs.writeFileSync(path.join(rootpath,"temp","countryflag",country+`flag.png`), resizedflag)
+                                fs.writeFileSync(path.join(rootpath, "temp", "username",userpng), text2png(username,{
+                                    color: "#ffffff",
+                                    font: "63px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "country",country+`.png`), text2png(country,{
+                                    color: "#ffffff",
+                                    font: "36px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "globalrank",userpng), text2png(`#`+globalrank,{
+                                    color: "#ffffff",
+                                    font: "76px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "countryrank",userpng), text2png(`#`+countryrank,{
+                                    color: "#ffffff",
+                                    font: "57px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "level",userpng), text2png(level,{
+                                    color: "#ffffff",
+                                    font: "30px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "A",userpng), text2png(A,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "S",userpng), text2png(S,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SH",userpng), text2png(SH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SS",userpng), text2png(SS,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "SSH",userpng), text2png(SSH,{
+                                    color: "#ffffff",
+                                    font: "28px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "pp",userpng), text2png(pp,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "accuracy",userpng), text2png(accuracy,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "playtime",userpng), text2png(playtime,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                fs.writeFileSync(path.join(rootpath, "temp", "score",userpng), text2png(score,{
+                                    color: "#ffffff",
+                                    font: "38px Varela",
+                                    localFontPath: fontpath,
+                                    localFontName: "Varela"
+                                }))
+                                var dcmcouldntloadimg = await merge(
+                                    [
+                                        {
+                                            src: path.join(rootpath,"template","backgroundcard.png")
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","avatar",userjpg),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","avatarcornerround.png"),
+                                            x:45,
+                                            y:55
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","username",userpng),
+                                            x:347,
+                                            y:72
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryflag",country+`flag.png`),
+                                            x:350,
+                                            y:130
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","country",country+`.png`),
+                                            x:425,
+                                            y:140
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","globalrank",userpng),
+                                            x:347,
+                                            y:190
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","countryrank",userpng),
+                                            x:347,
+                                            y:276
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","level",userpng),
+                                            x: Math.ceil(376 - (level.length * 18 + (level.length - 1) * 1) / 2) + 1,
+                                            y: 360
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","A",userpng),
+                                            x: Math.ceil(810 - (A.length * 16 + (A.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","S",userpng),
+                                            x: Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SH",userpng),
+                                            x: Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1,
+                                            y: 204
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SS",userpng),
+                                            x: Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","SSH",userpng),
+                                            x: Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1,
+                                            y: 312
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","pp",userpng),
+                                            x: Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","accuracy",userpng),
+                                            x: Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","playtime",userpng),
+                                            x: Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"temp","score",userpng),
+                                            x: Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1,
+                                            y: 546
+                                        },
+                                        {
+                                            src: path.join(rootpath,"template","mania.png"),
+                                            x:252,
+                                            y:261
+                                        }
+                                    ],
+                                    {
+                                        Canvas: Canvas,
+                                        Image: Image
+                                    }).then(function (res) {
+                                        fs.writeFile(
+                                            path.join(rootpath, "temp", "card",userjpg),res.replace(/^data:image\/png;base64,/, ""),"base64",function (err) { if (err) data.log(err);
+                                                var img = fs.createReadStream(path.join(rootpath, "temp", "card",userjpg));
+                                                data.return({
+                                                    handler: "internal",
+                                                    data: {
+                                                        body: "",
+                                                        attachment: ([img])
+                                                    }
+                                                });
+                                            });
+                                    })
                                 break;
                                     }
                     break;
             }
     }
-    return{
-        handler:"internal",
-        data: reply
-    }
 }
-var osuavatar = async function(type,data) {
-    var username = encodeURIComponent(data.args.slice(1).join(" "))
-    var reply
-    switch(username){
-        case "":
-            reply = global.config.commandPrefix+"osu <username>"
-            break;
-        default:
-            switch(apikey){
-                case "":
-                    reply = "thay apikey trong owo.js trước khi sử dụng lệnh"
-                    break;
-                default:
-                    var api = `https://osu.ppy.sh/api/get_user?k=${apikey}&u=${username}&m=0`
-                    var bufferdata = request("GET",api);                                        //lấy bufferdata từ api
-                    var stringdata = bufferdata.body.toString();                                //đổi buffer --> string
-                    switch(stringdata){
-                        case "[]":
-                            return {
-                                handler: "internal",
-                                data: "không phải username!"
-                            }
-                            break;
-                        default:
-                            var objdata = JSON.parse(stringdata);                               //đổi string ->> object
-                            var user_id = objdata[0]["user_id"];                                //
-                            var avatarapi = `https://a.ppy.sh/${user_id}`
-                            var bufferavatar = await fetch(avatarapi).then(res => res.buffer())
-                            var avatarx = new streamBuffers.ReadableStreamBuffer({
-                                frequency: 10,
-                                chunkSize: 1024
-                            })
-                            avatarx.path = `image.png`
-                            avatarx.put(bufferavatar)
-                            avatarx.stop()
-                            break;
-                        }
-                    return {
-                        handler: "internal",
-                        data: {
-                            body: "",
-                            attachment: ([avatarx])
-                        }
-                    }
-                }
-            }
-        } //deo biet sao lai nhieu ngoac nhu nay cu enter roi them ngoac vao den het loi :))
 module.exports = {
-    osu,osutaiko,osuctb,osumania,osuavatar
+    osu,osucatch,osutaiko,osumania
 }
-//fuckucovid19
+//tks hy, trí và lâm //sắp thi rồi bruh

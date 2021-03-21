@@ -1,5 +1,5 @@
 {
-    "plugin_name": "getuserinfo",
+    "plugin_name": "osu",
     "plugin_exec": "owo.js",
     "plugin_scope": "osu",
     "command_map": {
@@ -15,10 +15,10 @@
             "fscope": "osutaiko",
             "compatibly": 0
         },
-        "osuctb": {
+        "osucatch": {
             "hargs": "<username>",
             "hdesc": "lấy thông tin người chơi",
-            "fscope": "osuctb",
+            "fscope": "osucatch",
             "compatibly": 0
         },
         "osumania": {
@@ -26,21 +26,29 @@
             "hdesc": "lấy thông tin người chơi",
             "fscope": "osumania",
             "compatibly": 0
-        },
-        "osuavatar":{
-            "hargs": "<username>",
-            "hdesc": "lấy avatar người chơi",
-            "fscope": "osuavatar",
-            "compatibly": 0
         }
     },
-    "author": "sinn",
+    "author": "shella",
     "version": "0.5",
     "node_depends": {
         "sync-request": "*",
         "node-fetch": "*",
         "path": "*",
-        "stream-buffers": "*"
+        "merge-images": "*",
+        "fs": "*",
+        "text2png": "*",
+        "canvas": "*",
+        "resize-img": "*",
+        "jimp": "*"
     },
+"file_map": {
+    "font/font.ttf": "font",
+    "template/avatarcornerround.png": "avatarcornerround",
+    "template/backgroundcard.png": "background",
+    "template/osu.png": "osu",
+    "template/taiko.png": "taiko",
+    "template/catch.png": "catch",
+    "template/mania.png": "mania"
+},
     "complied_for": "0.5.0"
 }
