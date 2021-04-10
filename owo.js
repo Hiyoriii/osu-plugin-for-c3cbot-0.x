@@ -60,7 +60,7 @@ for (var n in nameMapping) {
 }
 var fontpath = path.join(rootpath, "font", "font.ttf")
 var osu = async function(type,data) {
-    var username = encodeURIComponent(data.args.slice(1).join(" "))
+    var username = data.args.slice(1).join(" ")
     var reply //??
     switch(username){
         case "":
@@ -345,7 +345,7 @@ var osu = async function(type,data) {
     }
 }
 var osutaiko = async function(type,data) {
-    var username = encodeURIComponent(data.args.slice(1).join(" "))
+    var username = data.args.slice(1).join(" ")
     var reply
     switch(username){
         case "":
@@ -630,7 +630,7 @@ var osutaiko = async function(type,data) {
     }
 }
 var osucatch = async function(type,data) {
-    var username = encodeURIComponent(data.args.slice(1).join(" "))
+    var username = data.args.slice(1).join(" ")
     var reply
     switch(username){
         case "":
@@ -915,7 +915,7 @@ var osucatch = async function(type,data) {
     }
 }
 var osumania = async function(type,data) {
-    var username = encodeURIComponent(data.args.slice(1).join(" "))
+    var username = data.args.slice(1).join(" ")
     var reply
     switch(username){
         case "":
