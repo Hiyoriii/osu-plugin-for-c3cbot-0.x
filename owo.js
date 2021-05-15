@@ -1095,4 +1095,4 @@ var osumania = async function (type, data) {
 module.exports = {
     osu, osucatch, osutaiko, osumania
 }
-//tks hy, trí và lâm //sắp thi rồi bruh
+//nẻo vjp prồ
