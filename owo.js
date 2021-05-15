@@ -4,7 +4,7 @@ var path = global.nodemodule['path']
 var merge = global.nodemodule['merge-images']
 var fetch = global.nodemodule["node-fetch"]
 var request = global.nodemodule["sync-request"]
-var { Canvas, Image, createCanvas } = global.nodemodule["canvas"]
+var { Image, createCanvas, registerFont } = global.nodemodule["canvas"]
 var resize = global.nodemodule["resize-img"]
 var jimp = global.nodemodule['jimp']
 var apikey = "7b3886e3efe99c2a3b8db51c3a1e8f9325d8226f"//dont spam pls, ratelimit 1200req/min, use your own apikey to prevent ratelimiting
@@ -31,6 +31,7 @@ function rect(ctx, x, y, width, height, radius = 5) { //source at https://github
     ctx.closePath();
     ctx.fill();
 }
+
 function ensureExists(path, mask) {
     if (typeof mask != 'number') {
         mask = 0o777;
@@ -45,7 +46,9 @@ function ensureExists(path, mask) {
         return { err: ex };
     }
 }
+
 var rootpath = path.resolve(__dirname, "..", "osu-data");
+registerFont(path.join(rootpath, "font", "font.ttf"), { family: 'Varela' })
 ensureExists(rootpath);
 ensureExists(path.join(rootpath, "template"))
 ensureExists(path.join(rootpath, "font"))
@@ -67,6 +70,7 @@ ensureExists(path.join(rootpath, "temp", "pp"))
 ensureExists(path.join(rootpath, "temp", "accuracy"))
 ensureExists(path.join(rootpath, "temp", "score"))
 ensureExists(path.join(rootpath, "temp", "card"))
+
 var nameMapping = {
     "background": path.join(rootpath, "template", "backgroundcard.png"),
     "avatarcornerround": path.join(rootpath, "template", "avatarcornerround.png"),
@@ -114,7 +118,7 @@ var osu = async function (type, data) {
                             }
                         default:
                             var objdata = JSON.parse(stringdata);
-                            var levelpercent = (objdata[0]['level']-Math.floor(objdata[0]['level'])).toFixed(2)*100;
+                            var levelpercent = (objdata[0]['level'] - Math.floor(objdata[0]['level'])).toFixed(2) * 100;
                             var user_id = objdata[0]["user_id"];
                             var username = objdata[0]["username"];
                             var globalrank = objdata[0]["pp_rank"];
@@ -287,36 +291,40 @@ var osu = async function (type, data) {
                             img.src = path.join(rootpath, "temp", "A", userpng);
                             //S
                             img.onload = function () { ctx.drawImage(img, Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","S",userpng);
+                            img.src = path.join(rootpath, "temp", "S", userpng);
                             //SH (silver S)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","SH",userpng);
+                            img.src = path.join(rootpath, "temp", "SH", userpng);
                             //SS
                             img.onload = function () { ctx.drawImage(img, Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SS",userpng);
+                            img.src = path.join(rootpath, "temp", "SS", userpng);
                             //SSH(silver SS)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SSH",userpng);
+                            img.src = path.join(rootpath, "temp", "SSH", userpng);
                             //pp
                             img.onload = function () { ctx.drawImage(img, Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","pp",userpng);
+                            img.src = path.join(rootpath, "temp", "pp", userpng);
                             //accuraty
                             img.onload = function () { ctx.drawImage(img, Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1, 546) };
-                            img.src = path.join(rootpath,"temp","accuracy",userpng);
+                            img.src = path.join(rootpath, "temp", "accuracy", userpng);
                             //playtime
                             img.onload = function () { ctx.drawImage(img, Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","playtime",userpng);
+                            img.src = path.join(rootpath, "temp", "playtime", userpng);
                             //total score
-                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","score",userpng);
+                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length - 1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
+                            img.src = path.join(rootpath, "temp", "score", userpng);
                             //osu! logo .-.
                             img.onload = function () { ctx.drawImage(img, 252, 261) };
-                            img.src = path.join(rootpath,"template","osu.png");
+                            img.src = path.join(rootpath, "template", "osu.png");
                             //fill the level
                             ctx.fillStyle = '#969696';//790, 370
-                            rect(ctx, 440, 360, 400, 20, 4); 
+                            rect(ctx, 440, 360, 504, 12, 7);
                             ctx.fillStyle = 'rgb(255, 204, 34)'
-                            rect(ctx, 440, 360, 400/100*levelpercent, 20, 4)
+                            rect(ctx, 440, 360, 400 / 100 * levelpercent, 12, 7);
+                            //level percent
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.font = '21px Varela'
+                            ctx.fillText(levelpercent.toFixed(0) + '%', 960, 359 + 21)
                             fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer());
                             const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg));
                             data.return({
@@ -326,6 +334,7 @@ var osu = async function (type, data) {
                                     attachment: ([imgstream])
                                 }
                             });
+
                             break;
                     }
                     break;
@@ -364,7 +373,7 @@ var osutaiko = async function (type, data) {
                             }
                         default:
                             var objdata = JSON.parse(stringdata);
-                            var levelpercent = (objdata[0]['level']-Math.floor(objdata[0]['level'])).toFixed(2)*100;
+                            var levelpercent = (objdata[0]['level'] - Math.floor(objdata[0]['level'])).toFixed(2) * 100;
                             var user_id = objdata[0]["user_id"];
                             var username = objdata[0]["username"];
                             var globalrank = objdata[0]["pp_rank"];
@@ -537,36 +546,36 @@ var osutaiko = async function (type, data) {
                             img.src = path.join(rootpath, "temp", "A", userpng);
                             //S
                             img.onload = function () { ctx.drawImage(img, Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","S",userpng);
+                            img.src = path.join(rootpath, "temp", "S", userpng);
                             //SH (silver S)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","SH",userpng);
+                            img.src = path.join(rootpath, "temp", "SH", userpng);
                             //SS
                             img.onload = function () { ctx.drawImage(img, Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SS",userpng);
+                            img.src = path.join(rootpath, "temp", "SS", userpng);
                             //SSH(silver SS)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SSH",userpng);
+                            img.src = path.join(rootpath, "temp", "SSH", userpng);
                             //pp
                             img.onload = function () { ctx.drawImage(img, Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","pp",userpng);
+                            img.src = path.join(rootpath, "temp", "pp", userpng);
                             //accuraty
                             img.onload = function () { ctx.drawImage(img, Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1, 546) };
-                            img.src = path.join(rootpath,"temp","accuracy",userpng);
+                            img.src = path.join(rootpath, "temp", "accuracy", userpng);
                             //playtime
                             img.onload = function () { ctx.drawImage(img, Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","playtime",userpng);
+                            img.src = path.join(rootpath, "temp", "playtime", userpng);
                             //total score
-                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","score",userpng);
+                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length - 1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
+                            img.src = path.join(rootpath, "temp", "score", userpng);
                             //osu!taiko logo .-.
                             img.onload = function () { ctx.drawImage(img, 252, 261) };
-                            img.src = path.join(rootpath,"template","taiko.png");
+                            img.src = path.join(rootpath, "template", "taiko.png");
                             //fill the level
                             ctx.fillStyle = '#969696';//790, 370
-                            rect(ctx, 440, 360, 400, 20, 4); 
+                            rect(ctx, 440, 360, 504, 12, 7);
                             ctx.fillStyle = 'rgb(255, 204, 34)'
-                            rect(ctx, 440, 360, 400/100*levelpercent, 20, 4)
+                            rect(ctx, 440, 360, 400 / 100 * levelpercent, 12, 7);
                             fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer());
                             const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg));
                             data.return({
@@ -576,6 +585,7 @@ var osutaiko = async function (type, data) {
                                     attachment: ([imgstream])
                                 }
                             });
+
                             break;
                     }
                     break;
@@ -614,7 +624,7 @@ var osucatch = async function (type, data) {
                             }
                         default:
                             var objdata = JSON.parse(stringdata);
-                            var levelpercent = (objdata[0]['level']-Math.floor(objdata[0]['level'])).toFixed(2)*100;
+                            var levelpercent = (objdata[0]['level'] - Math.floor(objdata[0]['level'])).toFixed(2) * 100;
                             var user_id = objdata[0]["user_id"];
                             var username = objdata[0]["username"];
                             var globalrank = objdata[0]["pp_rank"];
@@ -787,36 +797,36 @@ var osucatch = async function (type, data) {
                             img.src = path.join(rootpath, "temp", "A", userpng);
                             //S
                             img.onload = function () { ctx.drawImage(img, Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","S",userpng);
+                            img.src = path.join(rootpath, "temp", "S", userpng);
                             //SH (silver S)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","SH",userpng);
+                            img.src = path.join(rootpath, "temp", "SH", userpng);
                             //SS
                             img.onload = function () { ctx.drawImage(img, Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SS",userpng);
+                            img.src = path.join(rootpath, "temp", "SS", userpng);
                             //SSH(silver SS)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SSH",userpng);
+                            img.src = path.join(rootpath, "temp", "SSH", userpng);
                             //pp
                             img.onload = function () { ctx.drawImage(img, Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","pp",userpng);
+                            img.src = path.join(rootpath, "temp", "pp", userpng);
                             //accuraty
                             img.onload = function () { ctx.drawImage(img, Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1, 546) };
-                            img.src = path.join(rootpath,"temp","accuracy",userpng);
+                            img.src = path.join(rootpath, "temp", "accuracy", userpng);
                             //playtime
                             img.onload = function () { ctx.drawImage(img, Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","playtime",userpng);
+                            img.src = path.join(rootpath, "temp", "playtime", userpng);
                             //total score
-                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","score",userpng);
+                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length - 1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
+                            img.src = path.join(rootpath, "temp", "score", userpng);
                             //osu!catch logo .-.
                             img.onload = function () { ctx.drawImage(img, 252, 261) };
-                            img.src = path.join(rootpath,"template","catch.png");
+                            img.src = path.join(rootpath, "template", "catch.png");
                             //fill the level
                             ctx.fillStyle = '#969696';//790, 370
-                            rect(ctx, 440, 360, 400, 20, 4); 
+                            rect(ctx, 440, 360, 504, 12, 7);
                             ctx.fillStyle = 'rgb(255, 204, 34)'
-                            rect(ctx, 440, 360, 400/100*levelpercent, 20, 4)
+                            rect(ctx, 440, 360, 400 / 100 * levelpercent, 12, 7);
                             fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer());
                             const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg));
                             data.return({
@@ -864,7 +874,7 @@ var osumania = async function (type, data) {
                             }
                         default:
                             var objdata = JSON.parse(stringdata);
-                            var levelpercent = (objdata[0]['level']-Math.floor(objdata[0]['level'])).toFixed(2)*100;
+                            var levelpercent = (objdata[0]['level'] - Math.floor(objdata[0]['level'])).toFixed(2) * 100;
                             var user_id = objdata[0]["user_id"];
                             var username = objdata[0]["username"];
                             var globalrank = objdata[0]["pp_rank"];
@@ -1037,36 +1047,36 @@ var osumania = async function (type, data) {
                             img.src = path.join(rootpath, "temp", "A", userpng);
                             //S
                             img.onload = function () { ctx.drawImage(img, Math.ceil(970 - (S.length * 16 + (S.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","S",userpng);
+                            img.src = path.join(rootpath, "temp", "S", userpng);
                             //SH (silver S)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1129 - (SH.length * 16 + (SH.length - 1) * 1) / 2) + 1, 204) };
-                            img.src = path.join(rootpath,"temp","SH",userpng);
+                            img.src = path.join(rootpath, "temp", "SH", userpng);
                             //SS
                             img.onload = function () { ctx.drawImage(img, Math.ceil(890 - (SS.length * 16 + (SS.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SS",userpng);
+                            img.src = path.join(rootpath, "temp", "SS", userpng);
                             //SSH(silver SS)
                             img.onload = function () { ctx.drawImage(img, Math.ceil(1050 - (SSH.length * 16 + (SSH.length - 1) * 1) / 2) + 1, 312) };
-                            img.src = path.join(rootpath,"temp","SSH",userpng);
+                            img.src = path.join(rootpath, "temp", "SSH", userpng);
                             //pp
                             img.onload = function () { ctx.drawImage(img, Math.ceil(137 - (pp.length * 23 + (pp.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","pp",userpng);
+                            img.src = path.join(rootpath, "temp", "pp", userpng);
                             //accuraty
                             img.onload = function () { ctx.drawImage(img, Math.ceil(393 - ((accuracy.length - 1) * 23 + (accuracy.length - 1) * 3) / 2) - 1, 546) };
-                            img.src = path.join(rootpath,"temp","accuracy",userpng);
+                            img.src = path.join(rootpath, "temp", "accuracy", userpng);
                             //playtime
                             img.onload = function () { ctx.drawImage(img, Math.ceil(700 - (playtime.length * 23 + (playtime.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","playtime",userpng);
+                            img.src = path.join(rootpath, "temp", "playtime", userpng);
                             //total score
-                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length -1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
-                            img.src = path.join(rootpath,"temp","score",userpng);
+                            img.onload = function () { ctx.drawImage(img, Math.ceil(1020 - ((score.length - 1) * 23 + (score.length - 1) * 3) / 2) + 1, 546) };
+                            img.src = path.join(rootpath, "temp", "score", userpng);
                             //osu!mania logo .-.
                             img.onload = function () { ctx.drawImage(img, 252, 261) };
-                            img.src = path.join(rootpath,"template","mania.png");
+                            img.src = path.join(rootpath, "template", "mania.png");
                             //fill the level
                             ctx.fillStyle = '#969696';//790, 370
-                            rect(ctx, 440, 360, 400, 20, 4); 
+                            rect(ctx, 440, 360, 504, 12, 7);
                             ctx.fillStyle = 'rgb(255, 204, 34)'
-                            rect(ctx, 440, 360, 400/100*levelpercent, 20, 4)
+                            rect(ctx, 440, 360, 400 / 100 * levelpercent, 12, 7);
                             fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer());
                             const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg));
                             data.return({
@@ -1076,7 +1086,6 @@ var osumania = async function (type, data) {
                                     attachment: ([imgstream])
                                 }
                             });
-
                             break;
                     }
                     break;
@@ -1086,4 +1095,4 @@ var osumania = async function (type, data) {
 module.exports = {
     osu, osucatch, osutaiko, osumania
 }
-//thằng nẻo giỏi canvas đấy
+//tks hy, trí và lâm //sắp thi rồi bruh
