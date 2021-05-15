@@ -196,7 +196,7 @@ var osu = async function (type, data) {
                             }))
                             fs.writeFileSync(path.join(rootpath, "temp", "level", userpng), text2png(level, {
                                 color: "#ffffff",
-                                font: "30px Varela",
+                                font: "33px Varela",
                                 localFontPath: fontpath,
                                 localFontName: "Varela"
                             }))
@@ -451,7 +451,7 @@ var osutaiko = async function (type, data) {
                             }))
                             fs.writeFileSync(path.join(rootpath, "temp", "level", userpng), text2png(level, {
                                 color: "#ffffff",
-                                font: "30px Varela",
+                                font: "33px Varela",
                                 localFontPath: fontpath,
                                 localFontName: "Varela"
                             }))
@@ -702,7 +702,7 @@ var osucatch = async function (type, data) {
                             }))
                             fs.writeFileSync(path.join(rootpath, "temp", "level", userpng), text2png(level, {
                                 color: "#ffffff",
-                                font: "30px Varela",
+                                font: "33px Varela",
                                 localFontPath: fontpath,
                                 localFontName: "Varela"
                             }))
@@ -952,7 +952,7 @@ var osumania = async function (type, data) {
                             }))
                             fs.writeFileSync(path.join(rootpath, "temp", "level", userpng), text2png(level, {
                                 color: "#ffffff",
-                                font: "30px Varela",
+                                font: "33px Varela",
                                 localFontPath: fontpath,
                                 localFontName: "Varela"
                             }))
@@ -1095,5 +1095,4 @@ var osumania = async function (type, data) {
 module.exports = {
     osu, osucatch, osutaiko, osumania
 }
-//tks hy, trí và lâm //sắp thi rồi bruh
-//fuck commit
+//nẻo vjp prồ
