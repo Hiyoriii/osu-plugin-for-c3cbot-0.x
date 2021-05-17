@@ -29,19 +29,14 @@
         }
     },
     "author": "shella",
-    "version": "0.5",
+    "version": "3.15",
     "node_depends": {
-        "sync-request": "*",
         "node-fetch": "*",
         "path": "*",
-        "merge-images": "*",
         "fs": "*",
-        "text2png": "*",
-        "canvas": "*",
-        "resize-img": "*",
-        "jimp": "*"
+        "canvas": "*"
     },
-"file_map": {
+    "file_map": {
     "font/font.ttf": "font",
     "template/avatarcornerround.png": "avatarcornerround",
     "template/backgroundcard.png": "background",
