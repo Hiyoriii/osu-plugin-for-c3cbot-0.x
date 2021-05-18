@@ -39,13 +39,11 @@ function ensureExists(path, mask) {
     }
 }
 var rootpath = path.resolve(__dirname, "..", "osu-data")
-registerFont(path.join(rootpath, "font", "font.ttf"), { family: 'VarelaRound' })
 ensureExists(rootpath)
 ensureExists(path.join(rootpath, "template"))
 ensureExists(path.join(rootpath, "font"))
 ensureExists(path.join(rootpath, "temp"))
 ensureExists(path.join(rootpath, "temp", "card"))
-
 var nameMapping = {
     "background": path.join(rootpath, "template", "backgroundcard.png"),
     "avatarcornerround": path.join(rootpath, "template", "avatarcornerround.png"),
@@ -60,6 +58,7 @@ for (var n in nameMapping) {
         fs.writeFileSync(nameMapping[n], global.fileMap[n])
     }
 }
+registerFont(path.join(rootpath, "font", "font.ttf"), { family: 'VarelaRound' })
 var osu = async function (type, data) {
     var username = data.args.slice(1).join(" ")
     var reply
