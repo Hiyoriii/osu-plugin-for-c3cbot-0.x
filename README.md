@@ -3,4 +3,4 @@
  - Sử dụng cho https://github.com/c3cbot/c3c-0x
  - Drive link br: https://drive.google.com/file/d/1mmdb5juvZGHWxsBrgH5z1WclChkCm-T6/view?usp=sharing
  - Khi thực hiện lệnh sẽ cho ra stats card giống như sau:
- <img src = 'https://media.discordapp.net/attachments/806877267166756904/843673751626317824/osu_ZzMattytwokzZ.jpg'>
+ <img src = 'https://cdn.discordapp.com/attachments/837998797702430730/845664312488099840/osu_ZzMattytwokzZ.jpg'>
