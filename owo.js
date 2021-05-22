@@ -1,7 +1,7 @@
 var fs = global.nodemodule["fs"]
 var path = global.nodemodule['path']
 var fetch = global.nodemodule["node-fetch"]
-var { Image, createCanvas, registerFont,loadImage } = global.nodemodule["canvas"]
+var { Image, createCanvas, registerFont, loadImage } = global.nodemodule["canvas"]
 function rect(ctx, x, y, width, height, radius = 5) {
     if (typeof radius === 'number') {
         radius = {
@@ -9,9 +9,9 @@ function rect(ctx, x, y, width, height, radius = 5) {
             tr: radius,
             br: radius,
             bl: radius
-        } 
+        }
     }
-    ctx.beginPath() 
+    ctx.beginPath()
     ctx.moveTo(x + radius.tl, y)
     ctx.lineTo(x + width - radius.tr, y)
     ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr)
@@ -96,30 +96,30 @@ var osu = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
-		if(globalrank == null) {
-			var globalrank = '-'
-		}
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
-		if(countryrank == null) {
-			var countryrank = '-'
-		}
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -160,7 +160,7 @@ var osu = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -171,7 +171,7 @@ var osu = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -189,26 +189,27 @@ var osu = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "osu.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
-
+                })
             }
-        }
+
+    }
+}
 var osutaiko = async function (type, data) {
     var username = data.args.slice(1).join(" ")
     var reply
@@ -246,24 +247,30 @@ var osutaiko = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -304,7 +311,7 @@ var osutaiko = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -315,7 +322,7 @@ var osutaiko = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -333,26 +340,27 @@ var osutaiko = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "taiko.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
-
+                })
             }
-        }
+
+    }
+}
 var osucatch = async function (type, data) {
     var username = data.args.slice(1).join(" ")
     var reply
@@ -390,24 +398,30 @@ var osucatch = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -448,7 +462,7 @@ var osucatch = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -459,7 +473,7 @@ var osucatch = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -477,26 +491,27 @@ var osucatch = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "catch.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
-
+                })
             }
-        }
+
+    }
+}
 var osumania = async function (type, data) {
     var username = data.args.slice(1).join(" ")
     var reply
@@ -534,24 +549,30 @@ var osumania = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -592,7 +613,7 @@ var osumania = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -603,7 +624,7 @@ var osumania = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -621,26 +642,27 @@ var osumania = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "mania.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
-
+                })
             }
-        }
+
+    }
+}
 module.exports = {
-    osu,osucatch,osutaiko,osumania
+    osu, osucatch, osutaiko, osumania
 }
