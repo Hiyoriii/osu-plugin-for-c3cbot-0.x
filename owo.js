@@ -140,7 +140,11 @@ var osu = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
+                try{
                 var avatarimg = await loadImage(js.avatar_url)
+                }catch{
+                    var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
+                    }
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
@@ -284,7 +288,11 @@ var osutaiko = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
-                var avatarimg = await loadImage(js.avatar_url)
+                try{
+                    var avatarimg = await loadImage(js.avatar_url)
+                    }catch{
+                        var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
+                        }
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
@@ -428,7 +436,11 @@ var osucatch = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
-                var avatarimg = await loadImage(js.avatar_url)
+                try{
+                    var avatarimg = await loadImage(js.avatar_url)
+                    }catch{
+                        var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
+                        }
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
@@ -572,7 +584,11 @@ var osumania = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
-                var avatarimg = await loadImage(js.avatar_url)
+                try{
+                    var avatarimg = await loadImage(js.avatar_url)
+                    }catch{
+                        var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
+                        }
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
