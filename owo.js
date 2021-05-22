@@ -105,7 +105,13 @@ var osu = async function (type, data) {
             else{
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+		if(globalrank == null) {
+			var globalrank = '-'
+		}
                 var countryrank = js.statistics.rank.country
+		if(countryrank == null) {
+			var countryrank = '-'
+		}
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
