@@ -13,3 +13,5 @@
   <img src = 'https://cdn.discordapp.com/attachments/822128081736302623/847993959472168960/unknown.png'>
  - unset: hủy ghi nhớ username của bạn:
   <img src = 'https://cdn.discordapp.com/attachments/822128081736302623/847994146945368075/unknown.png'>
+lưu ý: bạn vẫn có thể sử dụng lệnh /osu <username> trong lúc đã set username:
+ <img src = 'https://cdn.discordapp.com/attachments/822128081736302623/848178651250032670/unknown.png'>
