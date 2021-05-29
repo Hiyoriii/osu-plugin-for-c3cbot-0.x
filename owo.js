@@ -1,7 +1,7 @@
-var fs = global.nodemodule["fs"]
-var path = global.nodemodule['path']
-var fetch = global.nodemodule["node-fetch"]
-var { Image, createCanvas, registerFont,loadImage } = global.nodemodule["canvas"]
+const fs = global.nodemodule["fs"]
+const path = global.nodemodule['path']
+const fetch = global.nodemodule["node-fetch"]
+const { Image, createCanvas, registerFont, loadImage } = global.nodemodule["canvas"]
 function rect(ctx, x, y, width, height, radius = 5) {
     if (typeof radius === 'number') {
         radius = {
@@ -9,9 +9,9 @@ function rect(ctx, x, y, width, height, radius = 5) {
             tr: radius,
             br: radius,
             bl: radius
-        } 
+        }
     }
-    ctx.beginPath() 
+    ctx.beginPath()
     ctx.moveTo(x + radius.tl, y)
     ctx.lineTo(x + width - radius.tr, y)
     ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr)
@@ -58,13 +58,19 @@ for (var n in nameMapping) {
         fs.writeFileSync(nameMapping[n], global.fileMap[n])
     }
 }
+
 registerFont(path.join(rootpath, "font", "font.ttf"), { family: 'VarelaRound' })
 var osu = async function (type, data) {
-    var username = data.args.slice(1).join(" ")
+    const dbase = global.data
+    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
+        var username = data.args.slice(1).join(" ")
+    } else {
+        var username = dbase.osu[data.msgdata.senderID]
+    }
     var reply
     switch (username) {
         case "":
-            reply = global.config.commandPrefix + "osu <username>"
+            reply = `please link an account using "${global.config.commandPrefix}osuset <username>" or specify a username!`
             return {
                 handler: "internal",
                 data: reply
@@ -96,24 +102,30 @@ var osu = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -140,11 +152,7 @@ var osu = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
-                try{
                 var avatarimg = await loadImage(js.avatar_url)
-                }catch{
-                    var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
-                    }
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
@@ -158,7 +166,7 @@ var osu = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -169,7 +177,7 @@ var osu = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -187,28 +195,34 @@ var osu = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "osu.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
-
+                })
             }
-        }
+
+    }
+}
 var osutaiko = async function (type, data) {
-    var username = data.args.slice(1).join(" ")
+    const dbase = global.data
+    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
+        var username = data.args.slice(1).join(" ")
+    } else {
+        var username = dbase.osu[data.msgdata.senderID]
+    }
     var reply
     switch (username) {
         case "":
@@ -244,24 +258,30 @@ var osutaiko = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -288,11 +308,7 @@ var osutaiko = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
-                try{
-                    var avatarimg = await loadImage(js.avatar_url)
-                    }catch{
-                        var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
-                        }
+                var avatarimg = await loadImage(js.avatar_url)
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
@@ -306,7 +322,7 @@ var osutaiko = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -317,7 +333,7 @@ var osutaiko = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -335,28 +351,34 @@ var osutaiko = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "taiko.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
-
+                })
             }
-        }
+
+    }
+}
 var osucatch = async function (type, data) {
-    var username = data.args.slice(1).join(" ")
+    const dbase = global.data
+    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
+        var username = data.args.slice(1).join(" ")
+    } else {
+        var username = dbase.osu[data.msgdata.senderID]
+    }
     var reply
     switch (username) {
         case "":
@@ -392,24 +414,30 @@ var osucatch = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -436,11 +464,7 @@ var osucatch = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
-                try{
-                    var avatarimg = await loadImage(js.avatar_url)
-                    }catch{
-                        var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
-                        }
+                var avatarimg = await loadImage(js.avatar_url)
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
@@ -454,7 +478,7 @@ var osucatch = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -465,7 +489,7 @@ var osucatch = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -483,28 +507,34 @@ var osucatch = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "catch.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
-
+                })
             }
-        }
+
+    }
+}
 var osumania = async function (type, data) {
-    var username = data.args.slice(1).join(" ")
+    const dbase = global.data
+    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
+        var username = data.args.slice(1).join(" ")
+    } else {
+        var username = dbase.osu[data.msgdata.senderID]
+    }
     var reply
     switch (username) {
         case "":
@@ -540,24 +570,30 @@ var osumania = async function (type, data) {
                 headers: headers
             })
             var js = await res.json()
-            if (js.id == undefined){
-                return{
-                    handler:"internal",
+            if (js.id == undefined) {
+                return {
+                    handler: "internal",
                     data: `không có người chơi nào mang tên "${username}"`
                 }
             }
-            else{
+            else {
                 var username = js.username
                 var globalrank = js.statistics.global_rank
+                if (globalrank == null) {
+                    var globalrank = '-'
+                }
                 var countryrank = js.statistics.rank.country
+                if (countryrank == null) {
+                    var countryrank = '-'
+                }
                 var score = js.statistics.ranked_score
                 var country = js.country.name
                 var countrycode = js.country.code
-                var accuracy = js.statistics.hit_accuracy .toFixed(2)
+                var accuracy = js.statistics.hit_accuracy.toFixed(2)
                 var pp = Number(js.statistics.pp).toFixed(0)
                 var level = js.statistics.level.current
                 var levelprogress = js.statistics.level.progress
-                var playtime = (Number(js.statistics.play_time) / 3600 ).toFixed(1) + "h"
+                var playtime = (Number(js.statistics.play_time) / 3600).toFixed(1) + "h"
                 var A = js.statistics.grade_counts.a
                 var S = js.statistics.grade_counts.s
                 var SH = js.statistics.grade_counts.sh
@@ -584,11 +620,7 @@ var osumania = async function (type, data) {
                 img.onload = function () { ctx.drawImage(img, 0, 0) }
                 img.src = path.join(rootpath, "template", "backgroundcard.png")
                 //avatar
-                try{
-                    var avatarimg = await loadImage(js.avatar_url)
-                    }catch{
-                        var avatarimg = await loadImage(`https://osu.ppy.sh/images/layout/avatar-guest.png`)
-                        }
+                var avatarimg = await loadImage(js.avatar_url)
                 ctx.drawImage(avatarimg, 45, 55, 277, 277)
                 img.onload = function () { ctx.drawImage(img, 45, 55) }
                 img.src = path.join(rootpath, "template", "avatarcornerround.png")
@@ -602,7 +634,7 @@ var osumania = async function (type, data) {
                 ctx.font = '40px VarelaRound'
                 ctx.fillText(country, 420, 127 + 40)
                 //a,s,sh,ss,ssh
-                ctx.fillStyle =`#ffffff`
+                ctx.fillStyle = `#ffffff`
                 ctx.font = '28px VarelaRound'
                 ctx.textAlign = 'center'
                 ctx.fillText(A, 792 + 22, 171 + 25 + 28)
@@ -613,7 +645,7 @@ var osumania = async function (type, data) {
                 //rank
                 ctx.textAlign = 'left'
                 ctx.font = '75px VarelaRound'
-                ctx.fillText("#"+globalrank, 347, 170 + 75)
+                ctx.fillText("#" + globalrank, 347, 170 + 75)
                 ctx.font = '57px VarelaRound'
                 ctx.fillText('#' + countryrank, 347, 259 + 57)
                 //level
@@ -631,26 +663,120 @@ var osumania = async function (type, data) {
                 //stuff
                 ctx.textAlign = 'center'
                 ctx.font = '40px VarelaRound'
-	            ctx.fillText(pp, 82 + 60, 534 + 40)
-	            ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
-	            ctx.fillText(playtime, 651 + 50, 536 + 40)
-	            ctx.fillText(score, 930 + 100, 536 + 40)
+                ctx.fillText(pp, 82 + 60, 534 + 40)
+                ctx.fillText(accuracy + '%', 324 + 75, 537 + 40)
+                ctx.fillText(playtime, 651 + 50, 536 + 40)
+                ctx.fillText(score, 930 + 100, 536 + 40)
                 img.onload = function () { ctx.drawImage(img, 252, 261) }
                 img.src = path.join(rootpath, "template", "mania.png")
                 //write
                 fs.writeFileSync(path.join(rootpath, "temp", "card", userjpg), canvas.toBuffer())
                 //stream
-                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg)) 
+                const imgstream = fs.createReadStream(path.join(rootpath, "temp", "card", userjpg))
                 data.return({
                     handler: "internal",
                     data: {
                         body: "",
                         attachment: ([imgstream])
                     }
-                })}
+                })
+            }
 
+    }
+}
+
+const osuset = async (type, data) => {
+    var args = data.args
+    var dbase = global.data;
+    if (dbase.osu == undefined) {
+        dbase.osu = {}
+    }
+    var username = args.slice(1).join(' ')
+    if (username == '') {
+        return {
+            handler: 'internal',
+            data: 'please specify a username!'
+        }
+    } else {
+        var api = `https://osu.ppy.sh/api/v2/users/${encodeURIComponent(username)}/osu`
+        var clientgrant = await fetch("https://osu.ppy.sh/oauth/token", {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "grant_type": "client_credentials",
+                "client_id": 6091,
+                "client_secret": "JaHpgCMOHDMyllcS5dAXIALZoN1ftZK4ms6myXQ0",
+                "scope": "public"
+            })
+        })
+        var clientgrant = await clientgrant.json()
+        var accesstoken = clientgrant.access_token
+        var headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application.json',
+            'Authorization': `Bearer ${accesstoken}`
+        }
+        var res = await fetch(api, {
+            method: 'GET',
+            headers: headers
+        })
+        var js = await res.json()
+        if (js.id == undefined) {
+            return {
+                handler: "internal",
+                data: `"${username}" was not found on osu!Bancho server`
+            }
+        } else {
+            dbase.osu[data.msgdata.senderID] = js.username
+            return {
+                handler: 'internal',
+                data: 'your account now linked with \"' + js.username + '\"'
             }
         }
+    }
+}
+
+const myusername = async (type, data) => {
+    var dbase = global.data
+    if(dbase.osu == undefined) {
+        dbase.osu = {}
+    }
+    if(dbase.osu[data.msgdata.senderID] == undefined || dbase.osu[data.msgdata.senderID] == '') {
+        return {
+            handler: 'internal',
+            data: 'your account was not linked with any osu! account'
+        }
+    } else {
+        return {
+            handler: 'internal',
+            data: `you are linked with ${dbase.osu[data.msgdata.senderID]}`
+        }
+    }
+}
+
+const unset = async (type,data) => {
+    var dbase = global.data;
+    if(dbase.osu == undefined) {
+        dbase.osu = {}
+    }
+    if(dbase.osu[data.msgdata.senderID] == undefined || dbase.osu[data.msgdata.senderID] == '') {
+        return {
+            handler: 'internal',
+            data: 'your account was not linked with any osu! account'
+        }
+    } else {
+        var acc = dbase.osu[data.msgdata.senderID]
+        dbase.osu[data.msgdata.senderID] = undefined
+        return {
+            handler: 'internal',
+            data: `unlinked with ${acc}`
+        }
+    }
+}
+
 module.exports = {
-    osu,osucatch,osutaiko,osumania
+    osu, osucatch, osutaiko, osumania, osuset, myusername, unset
 }

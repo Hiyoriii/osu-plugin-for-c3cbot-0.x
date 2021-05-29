@@ -26,9 +26,27 @@
             "hdesc": "lấy thông tin người chơi",
             "fscope": "osumania",
             "compatibly": 0
+        },
+        "osuset": {
+            "hargs": "<username>",
+            "hdesc": "set your username",
+            "fscope": "osuset",
+            "compatibly": 0            
+        },
+        "unset": {
+            "hargs": "",
+            "hdesc": "unset your username",
+            "fscope": "unset",
+            "compatibly": 0
+        },
+        "myusername": {
+            "hargs": "",
+            "hdesc": "view your linked username",
+            "fscope": "myusername",
+            "compatibly": 0            
         }
     },
-    "author": "shella",
+    "author": "shella & kali",
     "version": "3.16",
     "node_depends": {
         "node-fetch": "*",
