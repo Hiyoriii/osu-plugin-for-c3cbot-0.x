@@ -62,10 +62,13 @@ for (var n in nameMapping) {
 registerFont(path.join(rootpath, "font", "font.ttf"), { family: 'VarelaRound' })
 var osu = async function (type, data) {
     const dbase = global.data
-    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
-        var username = data.args.slice(1).join(" ")
+    var username = data.args.slice(1).join(" ")
+    if (username == '') {
+        if (dbase.osu[data.msgdata.senderID] != '' || dbase.osu[data.msgdata.senderID] != undefined) {
+            var username = dbase.osu[data.msgdata.senderID]
+        } 
     } else {
-        var username = dbase.osu[data.msgdata.senderID]
+        var username = username
     }
     var reply
     switch (username) {
@@ -218,10 +221,13 @@ var osu = async function (type, data) {
 }
 var osutaiko = async function (type, data) {
     const dbase = global.data
-    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
-        var username = data.args.slice(1).join(" ")
+    var username = data.args.slice(1).join(" ")
+    if (username == '') {
+        if (dbase.osu[data.msgdata.senderID] != '' || dbase.osu[data.msgdata.senderID] != undefined) {
+            var username = dbase.osu[data.msgdata.senderID]
+        } 
     } else {
-        var username = dbase.osu[data.msgdata.senderID]
+        var username = username
     }
     var reply
     switch (username) {
@@ -374,10 +380,13 @@ var osutaiko = async function (type, data) {
 }
 var osucatch = async function (type, data) {
     const dbase = global.data
-    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
-        var username = data.args.slice(1).join(" ")
+    var username = data.args.slice(1).join(" ")
+    if (username == '') {
+        if (dbase.osu[data.msgdata.senderID] != '' || dbase.osu[data.msgdata.senderID] != undefined) {
+            var username = dbase.osu[data.msgdata.senderID]
+        } 
     } else {
-        var username = dbase.osu[data.msgdata.senderID]
+        var username = username
     }
     var reply
     switch (username) {
@@ -530,10 +539,13 @@ var osucatch = async function (type, data) {
 }
 var osumania = async function (type, data) {
     const dbase = global.data
-    if (dbase.osu[data.msgdata.senderID] == '' || dbase.osu[data.msgdata.senderID] == undefined) {
-        var username = data.args.slice(1).join(" ")
+    var username = data.args.slice(1).join(" ")
+    if (username == '') {
+        if (dbase.osu[data.msgdata.senderID] != '' || dbase.osu[data.msgdata.senderID] != undefined) {
+            var username = dbase.osu[data.msgdata.senderID]
+        } 
     } else {
-        var username = dbase.osu[data.msgdata.senderID]
+        var username = username
     }
     var reply
     switch (username) {
@@ -741,10 +753,10 @@ const osuset = async (type, data) => {
 
 const myusername = async (type, data) => {
     var dbase = global.data
-    if(dbase.osu == undefined) {
+    if (dbase.osu == undefined) {
         dbase.osu = {}
     }
-    if(dbase.osu[data.msgdata.senderID] == undefined || dbase.osu[data.msgdata.senderID] == '') {
+    if (dbase.osu[data.msgdata.senderID] == undefined || dbase.osu[data.msgdata.senderID] == '') {
         return {
             handler: 'internal',
             data: 'your account was not linked with any osu! account'
@@ -757,12 +769,12 @@ const myusername = async (type, data) => {
     }
 }
 
-const unset = async (type,data) => {
+const unset = async (type, data) => {
     var dbase = global.data;
-    if(dbase.osu == undefined) {
+    if (dbase.osu == undefined) {
         dbase.osu = {}
     }
-    if(dbase.osu[data.msgdata.senderID] == undefined || dbase.osu[data.msgdata.senderID] == '') {
+    if (dbase.osu[data.msgdata.senderID] == undefined || dbase.osu[data.msgdata.senderID] == '') {
         return {
             handler: 'internal',
             data: 'your account was not linked with any osu! account'
